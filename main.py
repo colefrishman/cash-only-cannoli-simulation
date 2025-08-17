@@ -7,7 +7,7 @@ min_card_value = 5
 max_card_value = 12
 market_size = 3
 hand_size = 2
-player_count = 5
+player_count = 10
 wild_count = 4
 
 def shuffle_deck(deck):
@@ -57,12 +57,23 @@ def rank_hand(cards, hand_cards):
             if any(card in hand_cards for card in run_cards):
                 if len(run_cards) > len(best_hand):
                     best_hand = run_cards
-                elif len(run_cards) == len(best_hand) and best_hand:
-                    # If same length, compare by lowest value and chocolate chips
+                elif len(run_cards) == len(best_hand):
+                    # tiebreaker: lower value wins, then lower chips
                     if run_cards[0]['value'] < best_hand[0]['value']:
                         best_hand = run_cards
                     elif run_cards[0]['value'] == best_hand[0]['value'] and run_cards[0]['chocolate_chips'] < best_hand[0]['chocolate_chips']:
                         best_hand = run_cards
+
+    # Fallback: if wilds exist but none of the sets in hand triggered,
+    # attach wilds to the "best natural set" in the total pool.
+    if not best_hand:
+        # find the natural value group with the largest size
+        best_value = max(
+            (i for i in range(1, len(value_groups)) if value_groups[i]),
+            key=lambda v: len(value_groups[v])
+        )
+        current_run = value_groups[best_value].copy() + wildcards
+        best_hand = [{'value': best_value, 'chocolate_chips': chips} for chips in current_run]
 
     return best_hand
 
@@ -76,18 +87,21 @@ def compare_hands(market, hand1, hand2):
         return 1  # Hand 1 wins
     elif len(hand1_rank) < len(hand2_rank):
         return -1  # Hand 2 wins
-    
-    # If lengths are equal, compare by lowest value on lowest chocolate chip card
-    if hand1_rank[0]["value"] < hand2_rank[0]["value"]:
-        return 1
-    elif hand1_rank[0]["value"] > hand2_rank[0]["value"]:
-        return -1
+
+    try:
+        # If lengths are equal, compare by lowest value on lowest chocolate chip card
+        if hand1_rank[0]["value"] < hand2_rank[0]["value"]:
+            return 1
+        elif hand1_rank[0]["value"] > hand2_rank[0]["value"]:
+            return -1
     
     # If values are equal, compare by fewest chocolate chips on lowest chocolate chip card
-    if hand1_rank[0]["chocolate_chips"] < hand2_rank[0]["chocolate_chips"]:
-        return 1
-    elif hand1_rank[0]["chocolate_chips"] > hand2_rank[0]["chocolate_chips"]:
-        return -1
+        if hand1_rank[0]["chocolate_chips"] < hand2_rank[0]["chocolate_chips"]:
+            return 1
+        elif hand1_rank[0]["chocolate_chips"] > hand2_rank[0]["chocolate_chips"]:
+            return -1
+    except IndexError:
+        print(market, hand1, hand2)
     
     return 0  # Hands are equal
 
