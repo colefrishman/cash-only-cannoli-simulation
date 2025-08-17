@@ -3,7 +3,12 @@ from functools import cmp_to_key
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-max_card_value = 10
+min_card_value = 5
+max_card_value = 12
+market_size = 3
+hand_size = 2
+player_count = 5
+wild_count = 4
 
 def shuffle_deck(deck):
     random.shuffle(deck)
@@ -11,9 +16,12 @@ def shuffle_deck(deck):
 
 
 def setup_deck():
-    deck = [{'value': 0, 'chocolate_chips': max_card_value + 2 }, {'value': 0, 'chocolate_chips': max_card_value + 3}]
-    for rank in range(1, max_card_value + 1):
-        for chocolate_chips in range(1, rank):
+    deck = []
+    for i in range(1, wild_count+1):
+        deck.append({'value': 0, 'chocolate_chips': max_card_value + i})
+    deck.append({'value': 1, 'chocolate_chips': 1})
+    for rank in range(min_card_value, max_card_value + 1):
+        for chocolate_chips in range(1, rank+1):
             deck.append({'value': rank, 'chocolate_chips': chocolate_chips})
     return shuffle_deck(deck)
 
@@ -162,7 +170,7 @@ def visualize_game(players, market, ordered_hands, ax):
     ax.set_ylim(-0.5, y)
     ax.axis('off')
 
-def monte_carlo_simulation(num_rounds, player_count, market_size=4, hand_size=2):
+def monte_carlo_simulation(num_rounds, player_count, market_size, hand_size):
     best_run_lengths = []
     best_round = None
     worst_round = None
@@ -244,7 +252,7 @@ def monte_carlo_simulation(num_rounds, player_count, market_size=4, hand_size=2)
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(24, 6))  # Increased width
 
     # Display the frequency of best run lengths
-    ax1.hist(best_run_lengths, bins=range(1, 7), alpha=0.7, color='blue', edgecolor='black')
+    ax1.hist(best_run_lengths, bins=range(1, 8), alpha=0.7, color='blue', edgecolor='black')
     ax1.set_xlabel('Best Run Length')
     ax1.set_ylabel('Frequency')
     ax1.set_title('Monte Carlo Simulation: Frequency of Best Run Lengths')
@@ -272,4 +280,4 @@ def monte_carlo_simulation(num_rounds, player_count, market_size=4, hand_size=2)
     plt.show()
 
 if __name__ == '__main__':
-    monte_carlo_simulation(10000, 1)  # Run 1000 rounds with 5 players
+    monte_carlo_simulation(100000, player_count, market_size, hand_size)  # Run 1000 rounds with 5 players
